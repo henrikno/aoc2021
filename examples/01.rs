@@ -1,51 +1,36 @@
 use std::fs::File;
-use std::io::{self, prelude::*, BufReader};
+use std::io::{prelude::*, BufReader};
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    part1("data/01.example");
-    part1("data/01.input");
-    part2("data/01.example");
-    part2("data/01.input");
+    assert_eq!(part1("data/01.example")?, 7);
+    assert_eq!(part1("data/01.input")?, 1448);
+    assert_eq!(part2("data/01.example")?, 5);
+    assert_eq!(part2("data/01.input")?, 1471);
     Ok(())
 }
 
-fn part1(filename: &str) -> Result<(), Box<dyn Error>> {
+fn part1(filename: &str) -> Result<i32, Box<dyn Error>> {
     let file = File::open(filename)?;
     let reader = BufReader::new(file);
-    let mut prev: i32 = 10000;
-    let mut increases = 0;
-    for line in reader.lines() {
-        let value = line?.parse::<i32>()?;
-        if value > prev {
-            increases += 1;
-        }
-        prev = value;
-    }
-    println!("{}", increases);
-    Ok(())
+    Ok(increments(file_to_ints(reader)))
 }
 
-fn part2(filename: &str) -> Result<(), Box<dyn Error>> {
+
+fn part2(filename: &str) -> Result<i32, Box<dyn Error>> {
     let file = File::open(filename)?;
     let reader = BufReader::new(file);
+    let ints = file_to_ints(reader);
+    return Ok(increments(ints.windows(3).map(|x|x.iter().sum()).collect()));
+}
 
-    let mut increases = 0;
-    let mut ints = Vec::new();
-    for line in reader.lines() {
-        let value = line?.parse::<i32>()?;
-        ints.push(value);
-    }
+fn increments(ints: Vec<i32>) -> i32 {
+    ints.windows(2).filter(|val| val[0] < val[1]).count() as i32
+}
 
-    let mut prev: i32 = 10000;
-    for i in 0..ints.len()-2 {
-        let a = ints[i+0] + ints[i+1] + ints[i+2];
-        if a > prev {
-            increases += 1;
-        }
-        prev = a;
-    }
-
-    println!("{}", increases);
-    Ok(())
+fn file_to_ints(reader: BufReader<File>) -> Vec<i32> {
+    reader.lines()
+        .flat_map(|x| x.map(|y| y.parse::<i32>()))
+        .flatten()
+        .collect()
 }
